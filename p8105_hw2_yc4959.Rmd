@@ -24,3 +24,101 @@ subway_data =
   mutate(entry = ifelse(entry == "YES", TRUE, FALSE))
 ```
 
+This subway dataset contains line, station name, station latitude / longitude, routes served, entry, vending, entrance type, and ADA compliance.
+I cleaned the variable names, selected the needed variables, removed the exit_only variable, and converted entry from character to logical.
+
+The cleaned dataset contains `r nrow(subway_data)` rows and `r ncol(subway_data)` columns.
+
+I don't think this is “tidy data” because the data for routes 1 through 11 is spread across different columns.
+
+
+How many distinct stations are there? 
+```{r}
+subway_data |> 
+  distinct(line, station_name) |> 
+  nrow()
+```
+465 distinct stations are there.
+
+How many stations are ADA compliant?
+```{r}
+subway_data |> 
+  distinct(line, station_name, ada) |> 
+  count(ada)
+
+```
+84 stations are ADA compliant.
+
+What proportion of station entrances / exits without vending allow entrance?
+
+Use no vending entry divided by total no vending entry
+```{r}
+no_vending_entry = 
+  subway_data |> 
+   filter(vending == "NO", entry == TRUE) |> 
+  nrow()
+
+no_vending_total =
+   subway_data |> 
+  filter(vending == "NO") |> 
+  nrow()
+
+proportion = no_vending_entry / no_vending_total 
+proportion
+
+```
+The proportion of station entrances / exits without vending allow entrance is 37.7%.
+
+
+
+Reformat data so that route number and route name are distinct variables.
+
+When reshaping the data, I found that the route variables had different data types. Route1 to Route7 were stored as character variables, while Route8 to Route11 were stored as numeric variables.
+So i use mutate to change the data type.
+```{r}
+subway_data_reformatted =
+  subway_data |> 
+  mutate(
+    route8 = as.character(route8),
+    route9 = as.character(route9),
+    route10 = as.character(route10),
+    route11 = as.character(route11)
+  ) |> 
+  pivot_longer(
+    route1:route11,
+    names_to = "route_number",
+    values_to = "route_name"
+  )
+```
+
+How many distinct stations serve the A train?
+```{r}
+distinct_A_stations =
+  subway_data_reformatted |> 
+    filter(route_name == "A") |>
+   distinct(line, station_name) |> 
+  nrow()
+distinct_A_stations
+```
+60 stations serve the A train.
+
+How many distinct stations serve the A train?
+```{r}
+distinct_A_stations =
+  subway_data_reformatted |> 
+    filter(route_name == "A") |>
+   distinct(line, station_name) |> 
+  nrow()
+distinct_A_stations
+```
+
+Of the stations that serve the A train, how many are ADA compliant?
+```{r}
+distinct_A_stations_ADA =
+  subway_data_reformatted |> 
+    filter(route_name == "A", ada == "TRUE") |>
+   distinct(line, station_name) |> 
+  nrow()
+distinct_A_stations_ADA
+```
+17 Stations are ADA compliant.
