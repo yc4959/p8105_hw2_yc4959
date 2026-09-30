@@ -1,0 +1,26 @@
+---
+title: "p8105_hw2_yc4959"
+author: "Yimeng Cao"
+date: "2026-09-30"
+output: github_document
+---
+
+This is p8105 homework 2
+
+```{r}
+library(tidyverse)
+```
+
+## Problem 1
+
+Read and clean data, select retain line, station, name, station latitude / longitude, routes served, entry, vending, entrance type, and ADA compliance. Convert the entry variable from character (YES vs NO) to a logical variable.
+
+So I need to remove the exit_only column.
+```{r}
+subway_data = 
+  read_csv("./NYC_Transit_Subway_Entrance_And_Exit_Data.csv") %>% 
+  janitor::clean_names() %>% 
+  select(line:vending, - exit_only, ada) %>% 
+  mutate(entry = ifelse(entry == "YES", TRUE, FALSE))
+```
+
