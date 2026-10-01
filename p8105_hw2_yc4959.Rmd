@@ -122,3 +122,38 @@ distinct_A_stations_ADA =
 distinct_A_stations_ADA
 ```
 17 Stations are ADA compliant.
+
+
+##Problem 2
+
+Read and clean the Mr. Trash Wheel sheet
+
+specify the sheet in the Excel file and to omit non-data entries (rows with notes / figures; columns containing notes) using arguments in read_excel
+
+I checked xlsx file to find the range.
+```{r}
+trash_df =
+   readxl::read_excel(
+     "./202509 Trash Wheel Collection Data.xlsx",
+     sheet = "Mr. Trash Wheel",
+    range = "A2:N709"
+   )
+```
+
+
+Clena name and omit rows that do not include dumpster-specific data.
+```{r}
+trash_df =
+  trash_df |> 
+  janitor::clean_names() |> 
+  filter(!is.na(dumpster))
+```
+
+Round the number of sports balls to the nearest integer and converts the result to an integer variable (using as.integer)
+```{r}
+trash_df =
+  trash_df |> 
+  mutate(
+    sports_balls = as.integer(round(sports_balls))
+  )
+```
