@@ -100,17 +100,7 @@ distinct_A_stations =
   nrow()
 distinct_A_stations
 ```
-60 stations serve the A train.
-
-How many distinct stations serve the A train?
-```{r}
-distinct_A_stations =
-  subway_data_reformatted |> 
-    filter(route_name == "A") |>
-   distinct(line, station_name) |> 
-  nrow()
-distinct_A_stations
-```
+60 distinct stations serve the A train.
 
 Of the stations that serve the A train, how many are ADA compliant?
 ```{r}
@@ -124,8 +114,7 @@ distinct_A_stations_ADA
 17 Stations are ADA compliant.
 
 
-##Problem 2
-
+## Problem 2
 Read and clean the Mr. Trash Wheel sheet
 
 specify the sheet in the Excel file and to omit non-data entries (rows with notes / figures; columns containing notes) using arguments in read_excel
@@ -287,12 +276,13 @@ mci_baseline =
       sex,
       0 ~ "Female",
       1 ~ "Male"
-    ),
+    ),sex = as.factor(sex),
     apoe4 = case_match(
       apoe4,
       0 ~ "Non-carrier",
       1 ~ "Carrier"
-    )
+    ),
+    apoe4 = as.factor(apoe4)
   )
 view(mci_baseline)
 ```
@@ -302,7 +292,6 @@ Remove any participants who do not meet the stated inclusion criteria (i.e. no M
 mci_baseline =
   mci_baseline |> 
   filter(is.na(age_at_onset) | age_at_onset > current_age)
-nrow(mci_baseline)
 ```
 How many participants were recruited?
 ```{r}
@@ -356,7 +345,91 @@ female_APOE4_proportion =
 female_APOE4_proportion
 ```
 
-There were `r nrow(mci_baseline)` in the study. 
-`r mci_develop` developed MCI. 
-The average age was `r round(average_age, 2)` years. 
+There were `r nrow(mci_baseline)` participants recruited in the study. 
+Among these participants, `r mci_develop` developed MCI. 
+The average baseline age was `r round(average_age, 2)` years. 
 The proportion of women in the study who were APOE4 carriers was `r (female_APOE4_proportion * 100)`%.
+The dataset contains information on participant ID, age, sex, education, APOE4 carrier status, and age at MCI onset.
+
+
+Similarly, import, clean, and tidy the dataset of longitudinally observed biomarker values; comment on the steps on the import process and the features of the dataset.
+
+I cleaned the variable names and treated missing values as NA.
+```{r}
+mci_amyloid =
+  read_csv(
+    "./mci_amyloid.csv",
+    skip = 1,
+    na = c(".", "NA", "")
+  ) |> 
+  janitor::clean_names()
+
+```
+The dataset contains amyloid measurements at baseline and at 2, 4, 6, and 8 years. I used pivot_longer() to make the dataset tidy.
+```{r}
+mci_amyloid =
+  mci_amyloid |> 
+  pivot_longer(
+    baseline:time_8,
+    names_to = "time",
+    values_to = "amyloid"
+  )
+view(mci_amyloid)
+```
+
+Check whether some participants appear in only the baseline or amyloid datasets, and comment on your findings.
+Rename amyloid study_id to id so that the two datasets use the same variable name
+```{r}
+mci_amyloid =
+  mci_amyloid |> 
+  rename(id = study_id)
+```
+
+1. Check who appear in the baseline dataset but not in the amyloid dataset.
+```{r}
+baseline_only =
+  anti_join(
+    mci_baseline,
+    mci_amyloid,
+    by = "id"
+  )
+baseline_only
+```
+Check who appear in the amyloid dataset but not in the baseline dataset.
+```{r}
+amyloid_only =
+  anti_join(
+    mci_amyloid,
+    mci_baseline,
+    by = "id"
+  )
+amyloid_only
+```
+
+Because the amyloid data is longitudinal, so i used distinct ID to count the number of participants.
+```{r}
+amyloid_only |>
+  distinct(id) |>
+  nrow()
+```
+
+Combine the demographic and biomarker datasets so that only participants who appear in both datasets are retained
+```{r}
+mci_complete =
+  inner_join(
+    mci_baseline,
+    mci_amyloid,
+    by = "id"
+  )
+view(mci_complete)
+```
+
+Save the csv!!!!
+```{r}
+write_csv(
+  mci_complete,
+  "./mci_complete.csv"
+)
+```
+
+FINISH!
